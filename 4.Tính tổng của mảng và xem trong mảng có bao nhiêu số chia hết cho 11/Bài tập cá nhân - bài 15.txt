@@ -1,0 +1,121 @@
+.MODEL Small
+.STACK 100H
+
+.DATA
+    crlf DB 13, 10, '$'                   ; Ký tự xuống dòng
+    base_dec DW 10                        ; Cơ số 10
+    base_bin DW 2                         ; Cơ số 2 (dự trữ, không dùng trong code này)
+    base_hex DW 16                        ; Cơ số 16 (dự trữ, không dùng trong code này)
+    error DB "Thong bao loi $"            ; Chuỗi thông báo lỗi (không sử dụng trong code này)
+    str DB '0123456789ABCDEF'             ; Chuỗi dùng để xuất ký tự (dự trữ)
+    len DB 'Do dai mang: $'               ; Chuỗi thông báo độ dài mảng
+    strSum DB 13, 10, 'Tong cac chu so trong mang: $' ; Chuỗi thông báo tổng các chữ số
+    strDiv DB 13, 10, 'Tong cac so chia het cho 11: $' ; Chuỗi thông báo chia hết cho 11
+    x DW 0                                ; Lưu giá trị nhập vào
+    y DW 0                                ; Biến dự trữ
+    SUM DW 0                              ; Tổng các chữ số trong mảng
+    count DW 0                            ; Số phần tử chia hết cho 11
+
+.CODE
+MAIN PROC
+    ; Khởi tạo Data Segment
+    MOV AX, @DATA
+    MOV DS, AX
+
+    ; Hiển thị thông báo nhập độ dài mảng
+    MOV AH, 9
+    LEA DX, len
+    INT 21H
+
+    ; Nhập độ dài mảng
+    CALL Input
+    MOV CX, X                            ; Đặt CX = số phần tử (độ dài mảng)
+
+    ; Xuống dòng
+    MOV AH, 9
+    LEA DX, crlf
+    INT 21H
+
+INPUT_ARRAY:
+    ; Nhập giá trị từng phần tử và xử lý
+    CALL Input
+    MOV AX, SUM
+    ADD AX, X                            ; Cộng giá trị vừa nhập vào tổng
+    MOV SUM, AX
+    MOV AX, X
+    MOV DH, 0
+    MOV DL, 11
+    DIV DL                               ; Kiểm tra chia hết cho 11
+    CMP AH, 0
+    JNE CONTINUE                         ; Nếu không chia hết, tiếp tục vòng lặp
+    INC COUNT                            ; Nếu chia hết, tăng biến đếm
+
+CONTINUE:
+    LOOP INPUT_ARRAY                     ; Lặp lại cho đến khi hết mảng
+
+    ; Hiển thị tổng các chữ số trong mảng
+    MOV AH, 9
+    LEA DX, strSum
+    INT 21H
+    CALL Output                          ; Xuất tổng các chữ số
+
+    ; Hiển thị số lượng phần tử chia hết cho 11
+    MOV AH, 9
+    LEA DX, strDiv
+    INT 21H
+    MOV AX, COUNT
+    MOV SUM, AX
+    CALL Output                          ; Xuất số lượng phần tử chia hết cho 11
+
+    ; Kết thúc chương trình
+    MOV AH, 4CH
+    INT 21H
+MAIN ENDP
+
+; Hàm nhập giá trị (Input)
+INPUT PROC
+    MOV X, 0                             ; Xóa giá trị cũ trong X
+LOOP_INPUT:
+    MOV AH, 1                            ; Đọc ký tự từ bàn phím
+    INT 21H
+    CMP AL, 13                           ; Kiểm tra nếu nhấn Enter
+    JE END_INPUT
+    CMP AL, ' '                          ; Kiểm tra nếu nhấn Space
+    JE END_INPUT
+    MOV AH, 0
+    SUB AL, '0'                          ; Chuyển ký tự thành số
+    PUSH AX
+    MOV AX, X
+    MUL BASE_DEC                         ; Nhân giá trị cũ với 10 (dịch trái một chữ số)
+    MOV X, AX
+    POP AX
+    ADD X, AX                            ; Thêm chữ số mới vào
+    JMP LOOP_INPUT                       ; Tiếp tục nhập
+END_INPUT:
+    RET
+INPUT ENDP
+
+; Hàm xuất giá trị (Output)
+OUTPUT PROC
+    MOV AX, SUM                          ; Lấy giá trị cần xuất
+    MOV CX, 0                            ; Đặt CX = 0 (đếm chữ số)
+DIVIDE:
+    MOV DX, 0
+    DIV BASE_DEC                         ; Lấy chữ số cuối cùng (chia 10)
+    PUSH DX                              ; Lưu chữ số vào stack
+    INC CX                               ; Tăng bộ đếm chữ số
+    CMP AX, 0
+    JNE DIVIDE                           ; Tiếp tục nếu AX > 0
+
+SHOW:
+    MOV AH, 2                            ; Xuất ký tự
+    POP DX                               ; Lấy chữ số từ stack
+    ADD DL, '0'                          ; Chuyển số thành ký tự ASCII
+    INT 21H
+    DEC CX                               ; Giảm bộ đếm
+    CMP CX, 0
+    JNE SHOW                             ; Tiếp tục nếu còn chữ số
+    RET
+OUTPUT ENDP
+
+END MAIN

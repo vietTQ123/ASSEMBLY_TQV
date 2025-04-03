@@ -1,0 +1,57 @@
+.MODEL small
+.STACK 100
+
+.DATA
+    MUOI DW 10                     ; Giá trị 10 (dùng để chia lấy từng chữ số)
+    TB1 DB 10, 13, 'KET QUA LA: $' ; Chuỗi hiển thị thông báo kết quả
+
+.CODE
+MAIN PROC
+    ; Khởi tạo Data Segment
+    MOV AX, @DATA
+    MOV DS, AX
+
+    ; Nhập số nguyên từ bàn phím
+    MOV AH, 1                      ; Chức năng nhập ký tự từ bàn phím
+    INT 21H
+    SUB AL, '0'                    ; Chuyển ký tự sang giá trị số
+    MOV CX, 0                      ; Xóa bộ đếm CX
+    MOV CL, AL                     ; Lưu số nhập vào vào CL
+
+    ; Hiển thị chuỗi thông báo
+    LEA DX, TB1                    ; Địa chỉ thông báo
+    MOV AH, 9                      ; Chức năng in chuỗi
+    INT 21H
+
+    ; Tính giai thừa
+    MOV AX, 1                      ; AX = 1 (tích ban đầu)
+    MOV BX, 1                      ; BX = 1 (biến đếm)
+GIAITHUA:
+    MUL BX                         ; AX = AX * BX
+    INC BX                         ; Tăng BX lên 1
+    CMP BX, CX                     ; Kiểm tra nếu BX <= CX
+    JLE GIAITHUA                   ; Nếu đúng, tiếp tục vòng lặp tính giai thừa
+
+    ; Chuyển kết quả giai thừa thành chuỗi để hiển thị
+    MOV CX, 0                      ; CX = 0 (đếm số chữ số)
+LAPPUSH:
+    MOV DX, 0                      ; Xóa DX
+    DIV MUOI                       ; Chia AX cho 10, kết quả còn lại ở AX, dư ở DX
+    ADD DX, '0'                    ; Chuyển số dư thành ký tự
+    PUSH DX                        ; Đẩy ký tự vào stack
+    INC CX                         ; Tăng bộ đếm số chữ số
+    CMP AX, 0                      ; Kiểm tra nếu AX > 0
+    JNE LAPPUSH                    ; Nếu đúng, tiếp tục vòng lặp
+
+    ; Hiển thị từng ký tự từ stack (đảo ngược chuỗi)
+HIENTHI:
+    POP DX                         ; Lấy ký tự từ stack
+    MOV AH, 2                      ; Chức năng in ký tự
+    INT 21H
+    LOOP HIENTHI                   ; Lặp lại cho đến khi CX = 0
+
+    ; Kết thúc chương trình
+    MOV AH, 4CH
+    INT 21H
+MAIN ENDP
+END MAIN

@@ -1,0 +1,52 @@
+.MODEL small
+.STACK 100H
+
+.DATA
+    STR_IN DB 'Nhap vao mot chuoi ky tu ket thuc boi #: $'
+    STR_OUT DB 10, 13, 'Xau ky tu dao nguoc la: $'
+    STR DB 100 DUP('$') ; Bộ nhớ để lưu chuỗi ký tự đầu vào
+
+.CODE
+MAIN PROC
+    ; Khởi tạo Data Segment
+    MOV AX, @DATA
+    MOV DS, AX
+
+    ; Hiển thị thông báo nhập chuỗi
+    MOV AH, 9
+    LEA DX, STR_IN
+    INT 21H
+
+    ; Bắt đầu nhập ký tự
+    MOV CX, 0         ; Đếm số ký tự nhập vào
+    LEA SI, STR       ; Con trỏ lưu chuỗi
+NHAP_KY_TU:
+    MOV AH, 1         ; Đọc ký tự từ bàn phím
+    INT 21H
+    CMP AL, '#'       ; Kiểm tra nếu ký tự là '#'
+    JE XUAT_CHUOI     ; Nếu đúng, kết thúc nhập chuỗi
+    MOV [SI], AL      ; Lưu ký tự vào chuỗi
+    PUSH AX           ; Đẩy ký tự vào stack
+    INC SI            ; Tăng con trỏ lưu chuỗi
+    INC CX            ; Tăng bộ đếm ký tự
+    JMP NHAP_KY_TU    ; Tiếp tục nhập ký tự
+
+XUAT_CHUOI:
+    ; Hiển thị thông báo chuỗi đảo ngược
+    MOV AH, 9
+    LEA DX, STR_OUT
+    INT 21H
+
+    ; Xuất chuỗi đảo ngược từ stack
+XUAT_TUNG_KY_TU:
+    POP DX            ; Lấy ký tự từ stack
+    MOV AH, 2         ; Xuất ký tự
+    INT 21H
+    LOOP XUAT_TUNG_KY_TU ; Lặp lại cho đến khi hết ký tự
+
+    ; Kết thúc chương trình
+    MOV AH, 4CH
+    INT 21H
+
+MAIN ENDP
+END MAIN

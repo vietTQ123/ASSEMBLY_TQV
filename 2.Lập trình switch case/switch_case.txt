@@ -1,0 +1,109 @@
+.Model  Small
+.Stack 100H
+.Data   
+  input DB ? ; khai bao input
+  a DB ?     ; a dung de luu kq
+  b DB 10    ; b=10
+  c DB 5     ; c=5     
+  Thongbao1 DB "nhap gia tri input: $"
+  Thongbao2 DB "ket qua: $"
+  CRLF DB 13,10,'$' ; ky tu xuong dong  
+  muoi DW 10
+.Code 
+MAIN Proc   
+    Mov AX,@data ; khoi dau thanh ghi DS
+    Mov DS,AX ; tro thanh ghi DS ve dau doan data 
+    
+    Lea DX, Thongbao1 ; dua con tro dia chi cua Thong bao 1
+    Mov AH,9 ; su dung ham ngat 9 cua ngat INT 21h
+    Int 21h
+    
+    Mov AH,1        ; su dung ham ngat 1 cua ngat INT 21h
+    Int 21h  
+    Sub AL,30h      ; chuyen ky tu so sang so nguyen
+    Mov [input],AL  ; luu gia tri vao input
+    
+    Cmp input,0     ; so sanh voi 0
+    Je case0
+    
+    Cmp input,1     ; so sanh voi 1
+    Je case1
+    
+    Cmp input,2     ; so sanh voi 2
+    Je case2
+    
+    Cmp input,3     ; so sanh voi 3
+    Je case3
+    
+    Jmp default_case
+
+case0:
+    mov al, b        
+    add al, c        
+    mov a, al        
+    jmp print_result 
+
+case1:
+    
+    mov al, b       
+    sub al, c      
+    mov a, al        
+    jmp print_result 
+
+case2:
+    
+    mov al, b       
+    mov bl, c        
+    mul bl           
+    mov a, al       
+    jmp print_result 
+
+case3:
+    mov ax, 0
+    mov al, b        
+    mov bl, c        
+    div bl           
+    mov a, al       
+    jmp print_result 
+
+default_case:    
+
+    mov a, 0        
+    jmp print_result    
+
+print_result: 
+
+    Mov AH,9 
+    
+    LEA DX,CRLF
+    INT 21H
+    
+    lEA DX,Thongbao2
+    INT 21H
+
+    Mov AX, 0            
+    Mov AL, a             
+    Mov CX, 0             
+    
+    Lappush:
+        xor dx, dx        
+        div muoi          
+        add dl, '0'       
+        push dx          
+        inc cx           
+        cmp ax, 0        
+        jne Lappush
+    
+    
+    Hienthi:  
+        pop dx            
+        mov AH, 2         
+        int 21h  
+        loop Hienthi      
+        
+    
+    mov ah, 4Ch
+    int 21h
+    
+MAIN endp
+END MAIN
